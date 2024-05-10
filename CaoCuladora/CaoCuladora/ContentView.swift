@@ -8,45 +8,43 @@
 import SwiftUI
 
 struct ContentView: View {
-    // Em SwiftUi, os structs são constatemente criados e destrídos. Para evitar que uma
-    // variável perca o seu valor quando o struct for destruído, ela é marcada com um State
-    // para que o SwiftUi entenda que ela deve ser mantida.
-    
     // Esse @ na frente de State é um wrapper. Eu ainda não sei o que é isso :)
     @State var yearsInput: Int? = nil
     @State var monthsInput: Int? = nil
     @State var result: Int?
     @State var porte: String = "Pequeno"
     let portes = ["Grande", "Médio", "Pequeno"]
+    @State var porteSelecionado: Porte = .pequeno
     
     
     var body: some View {
         VStack(alignment: .leading) {
             Text("Qual a idade do seu cão?")
-                .font(.system(size: 24))
+                .font(.header5)
             
             Text("Anos")
+                .font(.body1)
             TextField(
                 "Digite a idade em anos completos",
                 value: $yearsInput,
                 format: .number
             )
-            .padding()
             
             Text("Meses")
+                .font(.body1)
             TextField(
                 "E quatos meses ele tem?",
                 value: $monthsInput,
                 format: .number
             )
-            .padding()
             
             Text("Porte")
-            Picker("Porte do cão", selection: $porte){
-                ForEach(portes, id: \.self){ porte in
+                .font(.body1)
+            Picker("Porte do cão", selection: $porteSelecionado){
+                ForEach(Porte.allCases, id: \.self){ porte in
                     // Texto é o que estará escrito e tag é o valor que ele atribuirá a variável
                     // em evidência
-                    Text(porte)
+                    Text(porte.rawValue.capitalized)
                         .tag(porte)
                 }
             }
@@ -56,8 +54,9 @@ struct ContentView: View {
             
             if let result {
                 Text("Seu cachorro tem em idade humana...")
+                    .font(.body1)
                 Text("\(result) anos")
-                    .font(.system(size: 40))
+                    .font(.display)
             } else {
                 Image(ImageResource.clarinha)
                     .resizable() // quero que a imagem redimensione
@@ -76,6 +75,7 @@ struct ContentView: View {
                         Color.indigo
                         Text("Cãocular")
                             .foregroundStyle(.white)
+                            .font(.body1)
                     }
             })
             .frame(height: 50) // frame do botão
@@ -104,8 +104,10 @@ struct ContentView: View {
             return Void()
         }
         
-        // meu resultado vai ser years * 7 mais a fração de meses do ano * 7
-        result = yearsInput * 7 + (monthsInput * 7) / 12
+        result = porteSelecionado.conversaoDeIdade(
+            anos: yearsInput,
+            meses: monthsInput
+        )
     }
 }
 
