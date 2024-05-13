@@ -12,80 +12,114 @@ struct ContentView: View {
     @State var yearsInput: Int? = nil
     @State var monthsInput: Int? = nil
     @State var result: Int?
-    @State var porte: String = "Pequeno"
-    let portes = ["Grande", "Médio", "Pequeno"]
     @State var porteSelecionado: Porte = .pequeno
+    @State var failedInput: Bool = false
+    @State var zeroInput: Bool = false
+    let noInputAlertTitle: String = "Preencha os anos e meses"
+    let zeroInputAlert: String = "Pelo menos um dos campos deve ter valor diferente de zero"
     
     
     var body: some View {
-        VStack(alignment: .leading) {
-            Text("Qual a idade do seu cão?")
-                .font(.header5)
-            
-            Text("Anos")
-                .font(.body1)
-            TextField(
-                "Digite a idade em anos completos",
-                value: $yearsInput,
-                format: .number
-            )
-            
-            Text("Meses")
-                .font(.body1)
-            TextField(
-                "E quatos meses ele tem?",
-                value: $monthsInput,
-                format: .number
-            )
-            
-            Text("Porte")
-                .font(.body1)
-            Picker("Porte do cão", selection: $porteSelecionado){
-                ForEach(Porte.allCases, id: \.self){ porte in
-                    // Texto é o que estará escrito e tag é o valor que ele atribuirá a variável
-                    // em evidência
-                    Text(porte.rawValue.capitalized)
-                        .tag(porte)
-                }
-            }
-            .pickerStyle(.segmented)
-            
-            Divider()
-            
-            if let result {
-                Text("Seu cachorro tem em idade humana...")
-                    .font(.body1)
-                Text("\(result) anos")
-                    .font(.display)
-            } else {
-                Image(ImageResource.clarinha)
-                    .resizable() // quero que a imagem redimensione
-                    .scaledToFit() // quero sempre mantenha suas proporções originais
-                    .frame(maxHeight: 150)
-                    .frame(maxWidth: .infinity)
-                    .shadow(radius: 20)
-                    .padding()
-            }
-            
-            
-            
-            Button(
-                action: processYears, label: {
-                    ZStack{
-                        Color.indigo
-                        Text("Cãocular")
-                            .foregroundStyle(.white)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20.0) {
+                    
+                    // Título
+                    Text("Qual a idade do seu cão?")
+                        .font(.header5)
+                        .padding(.vertical)
+                    
+                    // Campo Anos
+                    VStack(alignment: .leading, spacing: 8.0){
+                        Text("Anos")
                             .font(.body1)
+                        TextField(
+                            "Digite a idade em anos completos",
+                            value: $yearsInput,
+                            format: .number
+                        )
                     }
-            })
-            .frame(height: 50) // frame do botão
-            .cornerRadius(10)
+                    
+                    // Campo Meses
+                    VStack(alignment: .leading, spacing: 8.0){
+                        Text("Meses")
+                            .font(.body1)
+                        TextField(
+                            "E quatos meses ele tem?",
+                            value: $monthsInput,
+                            format: .number
+                        )
+                    }
+                    
+                    // Seletor de Porte
+                    VStack(alignment: .leading, spacing: 8.0){
+                        Text("Porte")
+                            .font(.body1)
+                        Picker("Porte do cão", selection: $porteSelecionado){
+                            ForEach(Porte.allCases, id: \.self){ porte in
+                                Text(porte.rawValue.capitalized)
+                                    .tag(porte)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                    }
+                    
+                    Divider()
+                    Spacer()
+                    
+                    if let result {
+                        Text("Seu cachorro tem em idade humana...")
+                            .font(.body1)
+                            .frame(maxWidth: .infinity)
+                        Text("\(result) anos")
+                            .contentTransition(.numericText())
+                            .font(.display)
+                            .frame(maxWidth: .infinity)
+                    } else {
+                        Image(ImageResource.clarinha)
+                            .resizable() // quero que a imagem redimensione
+                            .scaledToFit() // quero sempre mantenha suas proporções originais
+                            .frame(maxHeight: 150)
+                            .frame(maxWidth: .infinity)
+                            .shadow(radius: 20)
+                            .padding()
+                    }
+                    Spacer()
+                    
+                    
+                    Button(
+                        action: processYears, label: {
+                            ZStack{
+                                Color.indigo600
+
+                                Text("Cãocular")
+                                    .foregroundStyle(.white)
+                                    .font(.body1)
+                            }
+                    })
+                    .frame(height: 50) // frame do botão
+                    .cornerRadius(10)
+                }
+                .containerRelativeFrame(.vertical)
+                .textFieldStyle(.roundedBorder) // modificador do TextField
+                .keyboardType(.numberPad)   // modificador do TextField
+                .bold()
+                .fontDesign(.rounded)
+                .padding()
+                .navigationTitle("Cãoculadora")
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarBackground(.indigo600, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
+                .alert(noInputAlertTitle, isPresented: $failedInput){
+                    Button("OK", role: .cancel, action: {})
+                }
+                .alert(zeroInputAlert, isPresented: $zeroInput){
+                    Button("OK", role: .cancel, action: {})
+                }
+                .animation(.easeOut, value: result)
+            }
+            .scrollDismissesKeyboard(.immediately)
         }
-        .textFieldStyle(.roundedBorder) // modificador do TextField
-        .keyboardType(.numberPad)   // modificador do TextField
-        .bold()
-        .fontDesign(.rounded)
-        .padding()
     }
     
     func processYears() -> Void {
@@ -93,21 +127,23 @@ struct ContentView: View {
             let yearsInput,
             let monthsInput
         else {
-            // Caso anosInput seja um nil e o else não é o ultimo elemento da função, um
-            // return deve ser adicionado para que o funcionamento da função seja enterrompido.
+            failedInput = true
             print("Campo de entrada não preenchido!")
             return Void()
         }
         
         guard yearsInput > 0 || monthsInput > 0 else {
+            zeroInput = true
             print("Algum campo tem que ser maior que zero!")
             return Void()
         }
         
-        result = porteSelecionado.conversaoDeIdade(
-            anos: yearsInput,
-            meses: monthsInput
-        )
+        withAnimation(.easeInOut.speed(0.5)) {
+            result = porteSelecionado.conversaoDeIdade(
+                anos: yearsInput,
+                meses: monthsInput
+            )
+        }
     }
 }
 
